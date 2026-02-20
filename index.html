@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SR FOOD'S</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SR FOOD'S</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
 
@@ -18,20 +18,17 @@
 <!-- ---------------- LOGIN / REGISTER ---------------- -->
 <div id="auth-section" class="max-w-md mx-auto mt-8 p-4 bg-white shadow rounded">
   <h2 class="text-xl font-bold mb-4 text-center">Welcome! Are you a new customer?</h2>
-
   <div class="flex justify-around mb-4">
     <button onclick="showRegister()" class="px-4 py-2 bg-green-500 text-white rounded">New Customer</button>
     <button onclick="showLogin()" class="px-4 py-2 bg-blue-500 text-white rounded">Existing Customer</button>
   </div>
 
-  <!-- Register Form -->
   <div id="register-form" class="hidden">
     <input type="email" id="reg-email" placeholder="Email" class="w-full mb-2 p-2 border rounded">
     <input type="password" id="reg-pass" placeholder="Password" class="w-full mb-2 p-2 border rounded">
     <button onclick="registerUser()" class="w-full bg-green-500 text-white p-2 rounded">Register</button>
   </div>
 
-  <!-- Login Form -->
   <div id="login-form" class="hidden">
     <input type="email" id="login-email" placeholder="Email" class="w-full mb-2 p-2 border rounded">
     <input type="password" id="login-pass" placeholder="Password" class="w-full mb-2 p-2 border rounded">
@@ -57,7 +54,7 @@
 
 <!-- ---------------- PRODUCT GRID ---------------- -->
 <div id="products-section" class="hidden max-w-5xl mx-auto mt-6 grid grid-cols-2 gap-4 p-2">
-  <!-- Products will be appended here dynamically -->
+  <!-- Products will be appended dynamically -->
 </div>
 
 <!-- ---------------- CART + BILL ---------------- -->
@@ -83,167 +80,260 @@
   </div>
 </div>
 
+<!-- ---------------- REVIEWS ---------------- -->
+<div id="reviews-section" class="max-w-md mx-auto mt-6 p-4 bg-white shadow rounded">
+  <h2 class="text-2xl font-bold mb-2">Customer Reviews</h2>
+  <div id="reviews-list"></div>
+  <input type="text" id="review-text" placeholder="Write a review" class="w-full mb-2 p-2 border rounded">
+  <button onclick="addReview()" class="w-full bg-green-500 text-white p-2 rounded">Submit Review</button>
+</div>
+
+<!-- ---------------- ORDER TRACKING ---------------- -->
+<div id="orders-section" class="max-w-md mx-auto mt-6 p-4 bg-white shadow rounded">
+  <h2 class="text-2xl font-bold mb-2">Your Orders</h2>
+  <div id="orders-list">No orders yet.</div>
+  <button onclick="loadOrders()" class="mt-2 w-full bg-blue-500 text-white p-2 rounded">Refresh Orders</button>
+</div>
+
 <!-- ---------------- Firebase SDK ---------------- -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCXFCMaaepHDh-u9OFAKRa-CcZ3XWZI7gI",
-    authDomain: "sr-foods-2a67d.firebaseapp.com",
-    projectId: "sr-foods-2a67d",
-    storageBucket: "sr-foods-2a67d.firebasestorage.app",
-    messagingSenderId: "206534745328",
-    appId: "1:206534745328:web:f81563f3e2017fd560f635",
-    measurementId: "G-N00SCDPL3G"
+// ---------------- FIREBASE CONFIG ----------------
+const firebaseConfig = {
+  apiKey: "AIzaSyCXFCMaaepHDh-u9OFAKRa-CcZ3XWZI7gI",
+  authDomain: "sr-foods-2a67d.firebaseapp.com",
+  projectId: "sr-foods-2a67d",
+  storageBucket: "sr-foods-2a67d.firebasestorage.app",
+  messagingSenderId: "206534745328",
+  appId: "1:206534745328:web:f81563f3e2017fd560f635",
+  measurementId: "G-N00SCDPL3G"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// ---------------- AUTH FLOW ----------------
+function showRegister(){document.getElementById("register-form").classList.remove("hidden");document.getElementById("login-form").classList.add("hidden");}
+function showLogin(){document.getElementById("login-form").classList.remove("hidden");document.getElementById("register-form").classList.add("hidden");}
+
+async function registerUser(){
+  const email=document.getElementById("reg-email").value;
+  const pass=document.getElementById("reg-pass").value;
+  try{
+    await createUserWithEmailAndPassword(auth,email,pass);
+    alert("Registered!");
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("details-section").classList.remove("hidden");
+  }catch(err){alert(err.message);}
+}
+
+async function loginUser(){
+  const email=document.getElementById("login-email").value;
+  const pass=document.getElementById("login-pass").value;
+  try{
+    await signInWithEmailAndPassword(auth,email,pass);
+    alert("Login Successful!");
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("details-section").classList.remove("hidden");
+  }catch(err){alert(err.message);}
+}
+
+async function loginGoogle(){
+  try{
+    const result = await signInWithPopup(auth,provider);
+    alert("Welcome "+result.user.displayName);
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("details-section").classList.remove("hidden");
+  }catch(err){alert(err.message);}
+}
+
+// ---------------- SAVE DETAILS ----------------
+async function saveDetails(){
+  const user = auth.currentUser;
+  if(!user) return alert("User not logged in!");
+  const data = {
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    door: document.getElementById("door").value,
+    street: document.getElementById("street").value,
+    landmark: document.getElementById("landmark").value,
+    village: document.getElementById("village").value,
+    city: document.getElementById("city").value,
+    state: document.getElementById("state").value,
+    pincode: document.getElementById("pincode").value
   };
+  await setDoc(doc(db,"users",user.uid),data);
+  alert("Details saved!");
+  document.getElementById("details-section").classList.add("hidden");
+  document.getElementById("products-section").classList.remove("hidden");
+  loadProducts();
+}
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+// ---------------- PRODUCTS ----------------
+const products=[
+{name:"Chicken Pickle bone",price:1100,disclaimer:"Contains bones"},
+{name:"Chicken Gongura Pickle bone",price:1050,disclaimer:"Contains bones"},
+{name:"Chicken Boneless Pickle",price:1200,disclaimer:"Boneless"},
+{name:"Chicken Boneless Gongura Pickle",price:1150,disclaimer:"Boneless"},
+{name:"Mutton Pickle bone",price:2000,disclaimer:"Contains bones"},
+{name:"Mutton Gongura Pickle bone",price:1900,disclaimer:"Contains bones"},
+{name:"Mutton Boneless Pickle",price:2200,disclaimer:"Boneless"},
+{name:"Mutton Boneless Gongura Pickle",price:2100,disclaimer:"Boneless"},
+{name:"Prawn Pickle big",price:2000,disclaimer:"Big prawns"},
+{name:"Prawn Gongura Pickle",price:1900,disclaimer:"Big prawns"},
+{name:"Methadlu Fish Pickle",price:1500,disclaimer:"Fish pickle"},
+{name:"Normal Fish Pickle",price:1500,disclaimer:"Fish pickle"},
+{name:"Korameenu Fish Pickle",price:2400,disclaimer:"Fish pickle"},
+{name:"Sandhuva Fish Pickle",price:2400,disclaimer:"Fish pickle"},
+{name:"Vanjaram Fish Pickle",price:2400,disclaimer:"Fish pickle"},
+{name:"Pandu Kappa Fish Pickle",price:2400,disclaimer:"Fish pickle"}
+];
 
-  // ---------------- AUTH FLOW ----------------
-  function showRegister() {
-    document.getElementById("register-form").classList.remove("hidden");
-    document.getElementById("login-form").classList.add("hidden");
+let cart=[];
+function loadProducts(){
+  const container=document.getElementById("products-section");
+  container.innerHTML="";
+  products.forEach((p,i)=>{
+    const div=document.createElement("div");
+    div.className="bg-white p-2 rounded shadow";
+    div.innerHTML=`<h3 class="font-bold">${p.name}</h3>
+      <p>Price: ₹${p.price}</p>
+      <p class="text-sm italic">${p.disclaimer}</p>
+      <button onclick="addToCart(${i})" class="mt-2 w-full bg-red-500 text-white p-1 rounded">Add to Cart</button>`;
+    container.appendChild(div);
+  });
+}
+
+function addToCart(index){
+  cart.push(products[index]);
+  updateCart();
+}
+
+function updateCart(){
+  const container=document.getElementById("cart-items");
+  container.innerHTML="";
+  let total=0;
+  cart.forEach((item,i)=>{
+    total+=item.price;
+    const div=document.createElement("div");
+    div.className="flex justify-between mb-1";
+    div.innerHTML=`<span>${item.name} ₹${item.price}</span>
+      <button onclick="removeCart(${i})" class="text-red-500">Remove</button>`;
+    container.appendChild(div);
+  });
+  document.getElementById("cart-total").innerText=total;
+  if(cart.length>0) document.getElementById("cart-section").classList.remove("hidden");
+}
+
+function removeCart(i){cart.splice(i,1);updateCart();}
+
+function proceedPayment(){
+  alert("Payment simulated! Thank you for your order.");
+  const user = auth.currentUser;
+  if(user){
+    const orderData={items:[...cart], total:cart.reduce((a,b)=>a+b.price,0), date:new Date()};
+    addDoc(collection(db,"orders"),{uid:user.uid,...orderData});
   }
-  function showLogin() {
-    document.getElementById("login-form").classList.remove("hidden");
-    document.getElementById("register-form").classList.add("hidden");
+  cart=[];
+  updateCart();
+}
+
+// ---------------- REVIEWS ----------------
+async function addReview(){
+  const user=auth.currentUser;
+  const text=document.getElementById("review-text").value;
+  if(!user || !text) return;
+  await addDoc(collection(db,"reviews"),{uid:user.uid,text,date:new Date()});
+  document.getElementById("review-text").value="";
+  loadReviews();
+}
+
+async function loadReviews(){
+  const container=document.getElementById("reviews-list");
+  container.innerHTML="";
+  const snapshot=await getDocs(collection(db,"reviews"));
+  snapshot.forEach(doc=>{
+    const r=doc.data();
+    const div=document.createElement("div");
+    div.className="border p-2 mb-1 rounded";
+    div.innerHTML=`<p>${r.text}</p><small class="text-gray-500">${new Date(r.date.seconds*1000).toLocaleString()}</small>`;
+    container.appendChild(div);
+  });
+}
+loadReviews();
+
+// ---------------- ORDER TRACKING ----------------
+async function loadOrders() {
+  const user = auth.currentUser;
+  if (!user) return alert("Login first to see orders!");
+  const container = document.getElementById("orders-list");
+  container.innerHTML = "Loading...";
+
+  const snapshot = await getDocs(collection(db,"orders"));
+  const userOrders = [];
+  snapshot.forEach(doc => {
+    const o = doc.data();
+    o.id = doc.id;
+    if (o.uid === user.uid) userOrders.push(o);
+  });
+
+  if (userOrders.length === 0) {
+    container.innerHTML = "No orders yet.";
+    return;
   }
 
-  async function registerUser() {
-    const email = document.getElementById("reg-email").value;
-    const pass = document.getElementById("reg-pass").value;
-    try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-      alert("Registered successfully!");
-      document.getElementById("auth-section").classList.add("hidden");
-      document.getElementById("details-section").classList.remove("hidden");
-    } catch(err) {
-      alert(err.message);
-    }
-  }
+  container.innerHTML = "";
+  userOrders.forEach((order, i) => {
+    const div = document.createElement("div");
+    div.className = "bg-white shadow-md rounded-lg p-4 mb-4 border-l-4 border-red-600";
 
-  async function loginUser() {
-    const email = document.getElementById("login-email").value;
-    const pass = document.getElementById("login-pass").value;
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-      alert("Login successful!");
-      document.getElementById("auth-section").classList.add("hidden");
-      document.getElementById("details-section").classList.remove("hidden");
-    } catch(err) {
-      alert(err.message);
-    }
-  }
+    const itemsList = order.items.map(it => `<li>${it.name} - ₹${it.price}</li>`).join("");
 
-  async function loginGoogle() {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      alert("Welcome " + result.user.displayName);
-      document.getElementById("auth-section").classList.add("hidden");
-      document.getElementById("details-section").classList.remove("hidden");
-    } catch(err) {
-      alert(err.message);
-    }
-  }
+    const statuses = ["Received", "Preparing", "Ready", "Delivered"];
+    const statusIndex = order.statusIndex || 0;
 
-  async function saveDetails() {
-    const user = auth.currentUser;
-    if (!user) return alert("User not logged in!");
-    const data = {
-      name: document.getElementById("name").value,
-      phone: document.getElementById("phone").value,
-      door: document.getElementById("door").value,
-      street: document.getElementById("street").value,
-      landmark: document.getElementById("landmark").value,
-      village: document.getElementById("village").value,
-      city: document.getElementById("city").value,
-      state: document.getElementById("state").value,
-      pincode: document.getElementById("pincode").value
-    };
-    await setDoc(doc(db, "users", user.uid), data);
-    alert("Details saved!");
-    document.getElementById("details-section").classList.add("hidden");
-    document.getElementById("products-section").classList.remove("hidden");
-    loadProducts();
-  }
-
-  // ---------------- PRODUCTS ----------------
-  const products = [
-    {name: "Chicken Pickle bone", price:1100, disclaimer:"Contains bones"},
-    {name: "Chicken Gongura Pickle bone", price:1050, disclaimer:"Contains bones"},
-    {name: "Chicken Boneless Pickle", price:1200, disclaimer:"Boneless"},
-    {name: "Chicken Boneless Gongura Pickle", price:1150, disclaimer:"Boneless"},
-    {name: "Mutton Pickle bone", price:2000, disclaimer:"Contains bones"},
-    {name: "Mutton Gongura Pickle bone", price:1900, disclaimer:"Contains bones"},
-    {name: "Mutton Boneless Pickle", price:2200, disclaimer:"Boneless"},
-    {name: "Mutton Boneless Gongura Pickle", price:2100, disclaimer:"Boneless"},
-    {name: "Prawn Pickle big", price:2000, disclaimer:"Big prawns"},
-    {name: "Prawn Gongura Pickle", price:1900, disclaimer:"Big prawns"},
-    {name: "Methadlu Fish Pickle", price:1500, disclaimer:"Fish pickle"},
-    {name: "Normal Fish Pickle", price:1500, disclaimer:"Fish pickle"},
-    {name: "Korameenu Fish Pickle", price:2400, disclaimer:"Fish pickle"},
-    {name: "Sandhuva Fish Pickle", price:2400, disclaimer:"Fish pickle"},
-    {name: "Vanjaram Fish Pickle", price:2400, disclaimer:"Fish pickle"},
-    {name: "Pandu Kappa Fish Pickle", price:2400, disclaimer:"Fish pickle"},
-  ];
-
-  const cart = [];
-
-  function loadProducts() {
-    const container = document.getElementById("products-section");
-    container.innerHTML = "";
-    products.forEach((p,i)=>{
-      const div = document.createElement("div");
-      div.className = "bg-white p-2 rounded shadow";
-      div.innerHTML = `
-        <h3 class="font-bold">${p.name}</h3>
-        <p>Price: ₹${p.price}</p>
-        <p class="text-sm italic">${p.disclaimer}</p>
-        <button onclick="addToCart(${i})" class="mt-2 w-full bg-red-500 text-white p-1 rounded">Add to Cart</button>
-      `;
-      container.appendChild(div);
+    let statusHtml = `<div class="flex justify-between mt-4 mb-2">`;
+    statuses.forEach((s, idx) => {
+      statusHtml += `
+        <div class="flex flex-col items-center w-1/4">
+          <div class="w-6 h-6 rounded-full ${idx <= statusIndex ? 'bg-green-500' : 'bg-gray-300'}"></div>
+          <span class="text-xs mt-1 text-center">${s}</span>
+        </div>`;
     });
-  }
+    statusHtml += `</div>`;
 
-  function addToCart(index) {
-    cart.push(products[index]);
-    updateCart();
-  }
+    const nextButton = statusIndex < statuses.length - 1 ?
+      `<button onclick="advanceOrder('${order.id}', ${statusIndex})" 
+       class="mt-2 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Next Status</button>` :
+      `<span class="mt-2 text-green-600 font-bold">Delivered ✅</span>`;
 
-  function updateCart() {
-    const container = document.getElementById("cart-items");
-    container.innerHTML = "";
-    let total = 0;
-    cart.forEach((item,i)=>{
-      total += item.price;
-      const div = document.createElement("div");
-      div.className = "flex justify-between mb-1";
-      div.innerHTML = `
-        <span>${item.name} ₹${item.price}</span>
-        <button onclick="removeCart(${i})" class="text-red-500">Remove</button>
-      `;
-      container.appendChild(div);
-    });
-    document.getElementById("cart-total").innerText = total;
-    document.getElementById("cart-section").classList.remove("hidden");
-  }
+    div.innerHTML = `
+      <p class="font-bold text-lg mb-1">Order #${i+1} | ₹${order.total}</p>
+      <ul class="list-disc list-inside text-gray-700 mb-2">${itemsList}</ul>
+      <small class="text-gray-400">${new Date(order.date.seconds*1000).toLocaleString()}</small>
+      ${statusHtml}
+      ${nextButton}
+    `;
+    container.appendChild(div);
+  });
+}
 
-  function removeCart(i) {
-    cart.splice(i,1);
-    updateCart();
+async function advanceOrder(orderId, currentIndex) {
+  const orderRef = doc(db, "orders", orderId);
+  try {
+    await setDoc(orderRef, {statusIndex: currentIndex + 1}, {merge: true});
+    loadOrders();
+  } catch (err) {
+    alert("Error updating status: " + err.message);
   }
-
-  function proceedPayment() {
-    alert("Payment simulated! Thank you for your order.");
-    cart.length = 0;
-    updateCart();
-  }
+}
 </script>
-
 </body>
 </html>
