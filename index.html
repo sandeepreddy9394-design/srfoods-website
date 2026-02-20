@@ -4,26 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SR FOOD'S</title>
+
 <style>
-  /* Basic modern mobile-friendly styles */
-  body { font-family: Arial; margin:0; padding:0; background:#f8f8f8; }
-  header, .logo { text-align:center; padding:15px; background:#fc8019; color:#fff; font-size:24px; font-weight:bold; }
-  .container { padding:15px; max-width:500px; margin:auto; }
-  input, button, select { width:100%; padding:10px; margin:8px 0; border-radius:5px; border:1px solid #ccc; }
-  button { background:#fc8019; color:white; border:none; font-size:16px; }
-  .product-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .card { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-  .hidden { display:none; }
-  .about { text-align:center; margin-top:20px; }
-  .about img { width:100px; height:auto; margin:5px; cursor:pointer; }
+  body{font-family:Arial;margin:0;padding:0;background:#f8f8f8;}
+  header{text-align:center;padding:15px;background:#fc8019;color:#fff;font-size:24px;font-weight:bold;}
+  .container{padding:15px;max-width:500px;margin:auto;}
+  input, button, textarea{width:100%;padding:10px;margin:8px 0;border-radius:5px;border:1px solid #ccc;}
+  button{background:#fc8019;color:white;border:none;font-size:16px;}
+  .product-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .card{background:#fff;padding:10px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+  .hidden{display:none;}
+  .about{text-align:center;margin-top:20px;}
+  .about img{width:50px;margin:5px;cursor:pointer;}
 </style>
 
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAtx80kAGnt8OXSaCV7n1exUV86lTDDogw",
@@ -38,7 +37,6 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const analytics = getAnalytics(app);
   const provider = new GoogleAuthProvider();
 
   // Sample Products
@@ -62,6 +60,7 @@
   ];
 
   let currentUser = null;
+  let cart = [];
 
   // ---------- AUTH FUNCTIONS ----------
   async function registerUser(email,password){
@@ -126,8 +125,6 @@
     });
   }
 
-  // ---------- CART ----------
-  let cart = [];
   function addToCart(name,price){
     cart.push({name,price});
     alert(name+" added to cart");
@@ -137,8 +134,7 @@
 
 <body>
 
-<header class="logo">SR FOODS</header>
-
+<header>SR FOODS</header>
 <div class="container">
 
   <!-- Login Page -->
@@ -178,6 +174,5 @@
   </div>
 
 </div>
-
 </body>
 </html>
