@@ -1,1 +1,50 @@
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyAtx80kAGnt8OXSaCV7n1exUV86lTDDogw",
+    authDomain: "sr-foods.firebaseapp.com",
+    projectId: "sr-foods",
+    storageBucket: "sr-foods.firebasestorage.app",
+    messagingSenderId: "500836759028",
+    appId: "1:500836759028:web:98cedcdfbcd09bba97f5a1",
+    measurementId: "G-DSR915501T"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // Example functions
+  async function register(email, password){
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      alert("Registered Successfully!");
+      return userCredential.user;
+    } catch(err){ alert(err.message); }
+  }
+
+  async function login(email, password){
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      alert("Login Successful!");
+      return userCredential.user;
+    } catch(err){ alert(err.message); }
+  }
+
+  async function loginWithGoogle(){
+    try {
+      const result = await signInWithPopup(auth, provider);
+      alert("Login Successful! Welcome " + result.user.displayName);
+      return result.user;
+    } catch(err){ alert(err.message); }
+  }
+
+  async function saveUserDetails(uid, name, phone, address){
+    await setDoc(doc(db,"users",uid), { name, phone, address });
+    alert("Details Saved!");
+  }
+</script>
