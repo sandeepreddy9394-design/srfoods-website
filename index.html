@@ -1,169 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SR FOOD'S</title>
-
-<style>
-body{font-family:Arial;margin:0;padding:0;background:#f8f8f8;}
-header{text-align:center;padding:15px;background:#fc8019;color:#fff;font-size:24px;font-weight:bold;}
-.container{padding:15px;max-width:500px;margin:auto;}
-input, button, textarea{width:100%;padding:10px;margin:8px 0;border-radius:5px;border:1px solid #ccc;}
-button{background:#fc8019;color:white;border:none;font-size:16px;}
-.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.card{background:#fff;padding:10px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-.hidden{display:none;}
-.about{text-align:center;margin-top:20px;}
-.about img{width:50px;margin:5px;cursor:pointer;}
-</style>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-
-const firebaseConfig = {
-apiKey: "AIzaSyAtx80kAGnt8OXSaCV7n1exUV86lTDDogw",
-authDomain: "sr-foods.firebaseapp.com",
-projectId: "sr-foods",
-storageBucket: "sr-foods.firebasestorage.app",
-messagingSenderId: "500836759028",
-appId: "1:500836759028:web:98cedcdfbcd09bba97f5a1",
-measurementId: "G-DSR915501T"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-
-const products = [
-{name:"Chicken Pickle bone", price:1100, disclaimer:"Contains bones."},
-{name:"Chicken Gongura Pickle bone", price:1050, disclaimer:"Contains bones."},
-{name:"Chicken Boneless Pickle", price:1200, disclaimer:"Boneless."},
-{name:"Chicken Boneless Gongura Pickle", price:1150, disclaimer:"Boneless."},
-{name:"Mutton Pickle bone", price:2000, disclaimer:"Contains bones."},
-{name:"Mutton Gongura Pickle bone", price:1900, disclaimer:"Contains bones."},
-{name:"Mutton Boneless Pickle", price:2200, disclaimer:"Boneless."},
-{name:"Mutton Boneless Gongura Pickle", price:2100, disclaimer:"Boneless."},
-{name:"Prawn Pickel big", price:2000, disclaimer:"Contains shell."},
-{name:"Prawn Gongura Pickle", price:1900, disclaimer:"Contains shell."},
-{name:"Methadlu Fish Pickle", price:1500, disclaimer:"Spicy."},
-{name:"Normal Fish Pickle", price:1500, disclaimer:"Spicy."},
-{name:"Korameenu Fish Pickle", price:2400, disclaimer:"Spicy."},
-{name:"Sandhuva Fish Pickle", price:2400, disclaimer:"Spicy."},
-{name:"Vanjaram Fish Pickle", price:2400, disclaimer:"Spicy."},
-{name:"Pandu Kappa Fish Pickle", price:2400, disclaimer:"Spicy."}
-];
-
-let currentUser = null;
-let cart = [];
-
-async function registerUser(email,password){
-try{
-const userCredential = await createUserWithEmailAndPassword(auth,email,password);
-alert("Registered!");
-currentUser = userCredential.user;
-showDetailsForm();
-}catch(err){alert(err.message);}
-}
-
-async function loginUser(email,password){
-try{
-const userCredential = await signInWithEmailAndPassword(auth,email,password);
-alert("Login Successful!");
-currentUser = userCredential.user;
-showProducts();
-}catch(err){alert(err.message);}
-}
-
-async function loginGoogle(){
-try{
-const result = await signInWithPopup(auth, provider);
-alert("Login Successful! Welcome "+result.user.displayName);
-currentUser = result.user;
-showProducts();
-}catch(err){alert(err.message);}
-}
-
-async function saveDetails(){
-const name = document.getElementById("name").value;
-const phone = document.getElementById("phone").value;
-const address = document.getElementById("address").value;
-if(!name||!phone||!address){alert("Fill all fields");return;}
-await setDoc(doc(db,"users",currentUser.uid),{name,phone,address});
-alert("Details Saved!");
-showProducts();
-}
-
-function showDetailsForm(){
-document.getElementById("loginPage").classList.add("hidden");
-document.getElementById("detailsPage").classList.remove("hidden");
-}
-
-function showProducts(){
-document.getElementById("loginPage").classList.add("hidden");
-document.getElementById("detailsPage").classList.add("hidden");
-document.getElementById("productsPage").classList.remove("hidden");
-displayProducts();
-}
-
-function displayProducts(){
-const container = document.getElementById("productGrid");
-container.innerHTML = "";
-products.forEach(p=>{
-const card = document.createElement("div");
-card.classList.add("card");
-card.innerHTML = `<h4>${p.name}</h4><p>Price: ₹${p.price}</p><p style="font-size:12px;color:red;">${p.disclaimer}</p>
-<button onclick="addToCart('${p.name}',${p.price})">Add to Cart</button>`;
-container.appendChild(card);
-});
-}
-
-function addToCart(name,price){
-cart.push({name,price});
-alert(name+" added to cart");
-}
-</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SR FOOD'S</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
+<body class="bg-gray-50">
 
-<body>
-<header>SR FOODS</header>
-<div class="container">
-
-<div id="loginPage">
-<h2>Login / Register</h2>
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-<button onclick="loginUser(email.value,password.value)">Login</button>
-<button onclick="registerUser(email.value,password.value)">Register</button>
-<button onclick="loginGoogle()">Login with Google</button>
+<!-- ---------------- LOGO + STORE NAME ---------------- -->
+<div class="text-center py-6 bg-red-600 text-white">
+  <h1 class="text-3xl font-bold">SR FOOD'S</h1>
+  <p class="text-lg">AUTHENTIC GODAVARI TASTE</p>
+  <p class="text-sm">Since 2024</p>
 </div>
 
-<div id="detailsPage" class="hidden">
-<h2>Enter Your Details</h2>
-<input type="text" id="name" placeholder="Full Name">
-<input type="text" id="phone" placeholder="Phone Number">
-<textarea id="address" placeholder="Full Address"></textarea>
-<button onclick="saveDetails()">Save Details</button>
+<!-- ---------------- LOGIN / REGISTER ---------------- -->
+<div id="auth-section" class="max-w-md mx-auto mt-8 p-4 bg-white shadow rounded">
+  <h2 class="text-xl font-bold mb-4 text-center">Welcome! Are you a new customer?</h2>
+
+  <div class="flex justify-around mb-4">
+    <button onclick="showRegister()" class="px-4 py-2 bg-green-500 text-white rounded">New Customer</button>
+    <button onclick="showLogin()" class="px-4 py-2 bg-blue-500 text-white rounded">Existing Customer</button>
+  </div>
+
+  <!-- Register Form -->
+  <div id="register-form" class="hidden">
+    <input type="email" id="reg-email" placeholder="Email" class="w-full mb-2 p-2 border rounded">
+    <input type="password" id="reg-pass" placeholder="Password" class="w-full mb-2 p-2 border rounded">
+    <button onclick="registerUser()" class="w-full bg-green-500 text-white p-2 rounded">Register</button>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-form" class="hidden">
+    <input type="email" id="login-email" placeholder="Email" class="w-full mb-2 p-2 border rounded">
+    <input type="password" id="login-pass" placeholder="Password" class="w-full mb-2 p-2 border rounded">
+    <button onclick="loginUser()" class="w-full bg-blue-500 text-white p-2 rounded mb-2">Login</button>
+    <button onclick="loginGoogle()" class="w-full bg-red-500 text-white p-2 rounded">Login with Google</button>
+  </div>
 </div>
 
-<div id="productsPage" class="hidden">
-<h2>Products</h2>
-<div id="productGrid" class="product-grid"></div>
+<!-- ---------------- PERSONAL DETAILS + ADDRESS ---------------- -->
+<div id="details-section" class="hidden max-w-md mx-auto mt-6 p-4 bg-white shadow rounded">
+  <h2 class="text-xl font-bold mb-4">Your Details</h2>
+  <input type="text" id="name" placeholder="Full Name" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="phone" placeholder="Phone Number" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="door" placeholder="Door No" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="street" placeholder="Street Name" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="landmark" placeholder="Landmark" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="village" placeholder="Village" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="city" placeholder="City" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="state" placeholder="State" class="w-full mb-2 p-2 border rounded">
+  <input type="text" id="pincode" placeholder="Pincode" class="w-full mb-2 p-2 border rounded">
+  <button onclick="saveDetails()" class="w-full bg-green-500 text-white p-2 rounded">Save & Continue</button>
 </div>
 
-<div class="about">
-<h2>About SR FOODS</h2>
-<p>AUTHENTIC GODAVARI TASTE</p>
-<p>Since 2024</p>
-<img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" onclick="window.open('https://www.instagram.com/sr_foods_offical','_blank')" alt="Instagram">
-<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" onclick="window.open('https://wa.me/9492369911','_blank')" alt="WhatsApp">
-<h3>Reviews</h3>
-<div id="reviews">No reviews yet.</div>
+<!-- ---------------- PRODUCT GRID ---------------- -->
+<div id="products-section" class="hidden max-w-5xl mx-auto mt-6 grid grid-cols-2 gap-4 p-2">
+  <!-- Products will be appended here dynamically -->
 </div>
 
+<!-- ---------------- CART + BILL ---------------- -->
+<div id="cart-section" class="hidden max-w-md mx-auto mt-6 p-4 bg-white shadow rounded">
+  <h2 class="text-xl font-bold mb-4">Your Cart</h2>
+  <div id="cart-items"></div>
+  <p class="mt-2 font-bold">Delivery: Free</p>
+  <p class="mt-2 font-bold">Total: ₹<span id="cart-total">0</span></p>
+  <button onclick="proceedPayment()" class="w-full bg-blue-500 text-white p-2 rounded mt-2">Proceed to Payment</button>
 </div>
+
+<!-- ---------------- ABOUT US + CONTACT ---------------- -->
+<div id="about-section" class="max-w-md mx-auto mt-6 p-4 bg-white shadow rounded">
+  <h2 class="text-2xl font-bold mb-2">About Us</h2>
+  <p>SR FOOD'S brings you the authentic Godavari taste since 2024. Our pickles and snacks are made with fresh ingredients and traditional recipes.</p>
+  <div class="flex mt-4 space-x-4">
+    <a href="https://www.instagram.com/sr_foods_offical?igsh=MTQwamc5cWZzaDRsag==" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" class="w-10 h-10">
+    </a>
+    <a href="https://wa.me/9492369911" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="w-10 h-10">
+    </a>
+  </div>
+</div>
+
+<!-- ---------------- Firebase SDK ---------------- -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXFCMaaepHDh-u9OFAKRa-CcZ3XWZI7gI",
+    authDomain: "sr-foods-2a67d.firebaseapp.com",
+    projectId: "sr-foods-2a67d",
+    storageBucket: "sr-foods-2a67d.firebasestorage.app",
+    messagingSenderId: "206534745328",
+    appId: "1:206534745328:web:f81563f3e2017fd560f635",
+    measurementId: "G-N00SCDPL3G"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // ---------------- AUTH FLOW ----------------
+  function showRegister() {
+    document.getElementById("register-form").classList.remove("hidden");
+    document.getElementById("login-form").classList.add("hidden");
+  }
+  function showLogin() {
+    document.getElementById("login-form").classList.remove("hidden");
+    document.getElementById("register-form").classList.add("hidden");
+  }
+
+  async function registerUser() {
+    const email = document.getElementById("reg-email").value;
+    const pass = document.getElementById("reg-pass").value;
+    try {
+      await createUserWithEmailAndPassword(auth, email, pass);
+      alert("Registered successfully!");
+      document.getElementById("auth-section").classList.add("hidden");
+      document.getElementById("details-section").classList.remove("hidden");
+    } catch(err) {
+      alert(err.message);
+    }
+  }
+
+  async function loginUser() {
+    const email = document.getElementById("login-email").value;
+    const pass = document.getElementById("login-pass").value;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      alert("Login successful!");
+      document.getElementById("auth-section").classList.add("hidden");
+      document.getElementById("details-section").classList.remove("hidden");
+    } catch(err) {
+      alert(err.message);
+    }
+  }
+
+  async function loginGoogle() {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      alert("Welcome " + result.user.displayName);
+      document.getElementById("auth-section").classList.add("hidden");
+      document.getElementById("details-section").classList.remove("hidden");
+    } catch(err) {
+      alert(err.message);
+    }
+  }
+
+  async function saveDetails() {
+    const user = auth.currentUser;
+    if (!user) return alert("User not logged in!");
+    const data = {
+      name: document.getElementById("name").value,
+      phone: document.getElementById("phone").value,
+      door: document.getElementById("door").value,
+      street: document.getElementById("street").value,
+      landmark: document.getElementById("landmark").value,
+      village: document.getElementById("village").value,
+      city: document.getElementById("city").value,
+      state: document.getElementById("state").value,
+      pincode: document.getElementById("pincode").value
+    };
+    await setDoc(doc(db, "users", user.uid), data);
+    alert("Details saved!");
+    document.getElementById("details-section").classList.add("hidden");
+    document.getElementById("products-section").classList.remove("hidden");
+    loadProducts();
+  }
+
+  // ---------------- PRODUCTS ----------------
+  const products = [
+    {name: "Chicken Pickle bone", price:1100, disclaimer:"Contains bones"},
+    {name: "Chicken Gongura Pickle bone", price:1050, disclaimer:"Contains bones"},
+    {name: "Chicken Boneless Pickle", price:1200, disclaimer:"Boneless"},
+    {name: "Chicken Boneless Gongura Pickle", price:1150, disclaimer:"Boneless"},
+    {name: "Mutton Pickle bone", price:2000, disclaimer:"Contains bones"},
+    {name: "Mutton Gongura Pickle bone", price:1900, disclaimer:"Contains bones"},
+    {name: "Mutton Boneless Pickle", price:2200, disclaimer:"Boneless"},
+    {name: "Mutton Boneless Gongura Pickle", price:2100, disclaimer:"Boneless"},
+    {name: "Prawn Pickle big", price:2000, disclaimer:"Big prawns"},
+    {name: "Prawn Gongura Pickle", price:1900, disclaimer:"Big prawns"},
+    {name: "Methadlu Fish Pickle", price:1500, disclaimer:"Fish pickle"},
+    {name: "Normal Fish Pickle", price:1500, disclaimer:"Fish pickle"},
+    {name: "Korameenu Fish Pickle", price:2400, disclaimer:"Fish pickle"},
+    {name: "Sandhuva Fish Pickle", price:2400, disclaimer:"Fish pickle"},
+    {name: "Vanjaram Fish Pickle", price:2400, disclaimer:"Fish pickle"},
+    {name: "Pandu Kappa Fish Pickle", price:2400, disclaimer:"Fish pickle"},
+  ];
+
+  const cart = [];
+
+  function loadProducts() {
+    const container = document.getElementById("products-section");
+    container.innerHTML = "";
+    products.forEach((p,i)=>{
+      const div = document.createElement("div");
+      div.className = "bg-white p-2 rounded shadow";
+      div.innerHTML = `
+        <h3 class="font-bold">${p.name}</h3>
+        <p>Price: ₹${p.price}</p>
+        <p class="text-sm italic">${p.disclaimer}</p>
+        <button onclick="addToCart(${i})" class="mt-2 w-full bg-red-500 text-white p-1 rounded">Add to Cart</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function addToCart(index) {
+    cart.push(products[index]);
+    updateCart();
+  }
+
+  function updateCart() {
+    const container = document.getElementById("cart-items");
+    container.innerHTML = "";
+    let total = 0;
+    cart.forEach((item,i)=>{
+      total += item.price;
+      const div = document.createElement("div");
+      div.className = "flex justify-between mb-1";
+      div.innerHTML = `
+        <span>${item.name} ₹${item.price}</span>
+        <button onclick="removeCart(${i})" class="text-red-500">Remove</button>
+      `;
+      container.appendChild(div);
+    });
+    document.getElementById("cart-total").innerText = total;
+    document.getElementById("cart-section").classList.remove("hidden");
+  }
+
+  function removeCart(i) {
+    cart.splice(i,1);
+    updateCart();
+  }
+
+  function proceedPayment() {
+    alert("Payment simulated! Thank you for your order.");
+    cart.length = 0;
+    updateCart();
+  }
+</script>
+
 </body>
 </html>
